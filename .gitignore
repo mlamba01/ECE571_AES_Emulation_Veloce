@@ -1,0 +1,24 @@
+# .gitignore file for ECE 571 Final Project
+# Rehan Iqbal, Poonam Ganoskar, Mankirat Lamba
+
+$ cat .gitignore
+
+# skip everything in /docs
+# these are just PDFs and Word files
+
+/docs/*
+
+# skip everything in /config
+# handles the formatting of Questa Wave window
+
+/config/*
+
+# skip all generated outputs & log files
+
+/out/*
+
+# skip everything in /sim
+# relates to Icarus Verilog simulator
+# may need the text files later
+
+/sim/*
