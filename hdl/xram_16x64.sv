@@ -15,21 +15,16 @@
 //////////////////////////////////////////////////////////////////////
 module xram_16x64 
 (
-	clk, wr,
-	wr_addr, wr_data,
-	rd_addr, rd_data
+	input logic		clk, wr,
+	input logic [3:0]	wr_addr, rd_addr,
+	input logic [63:0]	wr_data,
+	output logic [63:0] 	rd_data
 );
  
-input clk, wr;
-input [3:0] wr_addr, rd_addr;
-input [63:0] wr_data;
-output [63:0] rd_data;
- 
-reg [63:0] mem [15:0];
-wire [63:0] rd_data;
+logic [63:0] mem [15:0];
  
 // behavioral code for 16x64 mem
-always @ (posedge clk)
+always_ff @ (posedge clk)
 begin
    if (wr)
       mem[wr_addr] <= wr_data;

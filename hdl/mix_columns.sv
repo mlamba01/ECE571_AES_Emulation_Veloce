@@ -13,13 +13,11 @@
 
 // (multiply 2)
 module xtimes (
-	in, out
+	input logic [7:0]		in, 
+	output logic [7:0]		out
 );
  
-input	[7:0]	in;
-output	[7:0]	out;
- 
-wire [3:0] xt;
+logic [3:0] xt;
 
 assign xt[3] = in[7];
 assign xt[2] = in[7];
@@ -34,13 +32,12 @@ endmodule
 //---------------------------------------------------------------------------------------
 // multiply 3
 module MUL3 (
-	in, out
+	input logic [7:0]	in, 
+	output logic [7:0]	out
 );
+
  
-input	[7:0]	in;
-output	[7:0]	out;
- 
-wire [7:0] xt;
+logic [7:0] xt;
 
 xtimes xt_u (.in(in), .out(xt));
 
@@ -50,13 +47,11 @@ endmodule
 //---------------------------------------------------------------------------------------
 // multiply E
 module MULE (
-	in, out
+	input logic [7:0]	in, 
+	output logic [7:0]	out
 );
- 
-input	[7:0]	in;
-output	[7:0]	out;
- 
-wire [7:0] xt1, xt2, xt3;
+
+logic [7:0] xt1, xt2, xt3;
 
 xtimes xt_u1 (.in(in), .out(xt1));
 xtimes xt_u2 (.in(xt1), .out(xt2));
@@ -68,13 +63,11 @@ endmodule
 //---------------------------------------------------------------------------------------
 // multiply B
 module MULB (
-	in, out
+	input logic [7:0]	in, 
+	output logic [7:0]	out
 );
  
-input	[7:0]	in;
-output	[7:0]	out;
- 
-wire [7:0] xt1, xt2, xt3;
+logic [7:0] xt1, xt2, xt3;
 
 xtimes xt_u1 (.in(in), .out(xt1));
 xtimes xt_u2 (.in(xt1), .out(xt2));
@@ -86,13 +79,11 @@ endmodule
 //---------------------------------------------------------------------------------------
 // multiply D
 module MULD (
-	in, out
+	input logic [7:0]	in, 
+	output logic [7:0]	out
 );
  
-input	[7:0]	in;
-output	[7:0]	out;
- 
-wire [7:0] xt1, xt2, xt3;
+logic [7:0] xt1, xt2, xt3;
 
 xtimes xt_u1 (.in(in), .out(xt1));
 xtimes xt_u2 (.in(xt1), .out(xt2));
@@ -104,13 +95,11 @@ endmodule
 //---------------------------------------------------------------------------------------
 // multiply 9
 module MUL9 (
-	in, out
+	input logic [7:0]	in, 
+	output logic [7:0]	out
 );
  
-input	[7:0]	in;
-output	[7:0]	out;
- 
-wire [7:0] xt1, xt2, xt3;
+logic [7:0] xt1, xt2, xt3;
 
 xtimes xt_u1 (.in(in), .out(xt1));
 xtimes xt_u2 (.in(xt1), .out(xt2));
@@ -121,13 +110,11 @@ assign out = xt3 ^ in;
 endmodule
 //---------------------------------------------------------------------------------------
 module byte_mix_columns (
-	a, b, c, d, out
+	input logic [7:0]	a, b, c, d, 
+	output logic [7:0]	out
 );
  
-input	[7:0]	a, b, c, d;
-output	[7:0]	out;
- 
-wire [7:0] mul2, mul3;
+logic [7:0] mul2, mul3;
 
 xtimes xt_u (.in(a), .out(mul2));
 MUL3 mul3_u (.in(b), .out(mul3));
@@ -137,13 +124,11 @@ assign out = mul2 ^ mul3 ^ c ^ d;
 endmodule
 //---------------------------------------------------------------------------------------
 module inv_byte_mix_columns (
-	a, b, c, d, out
+	input logic [7:0]	a, b, c, d, 
+	output logic [7:0]	out
 );
- 
-input	[7:0]	a, b, c, d;
-output	[7:0]	out;
- 
-wire [7:0] mule, mulb, muld, mul9;
+
+logic [7:0] mule, mulb, muld, mul9;
 
 MULE mule_u (.in(a), .out(mule));
 MULB mulb_u (.in(b), .out(mulb));
@@ -156,14 +141,12 @@ endmodule
 //---------------------------------------------------------------------------------------
 // Mix Columns for encryption word
 module word_mix_columns (
-	in, out
+	input logic [31:0]	in, 
+	output logic [31:0]	out
 );
  
-input	[31:0]	in;
-output	[31:0]	out;
- 
-wire [7:0] si0,si1,si2,si3;
-wire [7:0] so0,so1,so2,so3;
+logic [7:0] si0,si1,si2,si3;
+logic [7:0] so0,so1,so2,so3;
 
 assign si0[7:0] = in[31:24];
 assign si1[7:0] = in[23:16];
@@ -181,14 +164,12 @@ endmodule
 //---------------------------------------------------------------------------------------
 // inverse Mix Columns for decryption word
 module inv_word_mix_columns (
-	in, out
+	input logic [31:0]	in, 
+	output logic [31:0]	out
 );
  
-input	[31:0]	in;
-output	[31:0]	out;
- 
-wire [7:0] si0,si1,si2,si3;
-wire [7:0] so0,so1,so2,so3;
+logic [7:0] si0,si1,si2,si3;
+logic [7:0] so0,so1,so2,so3;
 
 assign si0 = in[31:24];
 assign si1 = in[23:16];
@@ -206,13 +187,11 @@ endmodule
 //---------------------------------------------------------------------------------------
 // Mix columns size: 4 words
 module mix_columns (
-	in, out
+	input logic [127:0]	in, 
+	output logic [127:0]	out
 );
- 
-input	[127:0]	in;
-output	[127:0]	out;
 
-wire [31:0] so0,so1,so2,so3;
+logic [31:0] so0,so1,so2,so3;
 
 word_mix_columns so0_u (.in(in[127:96]), .out(so0));
 word_mix_columns so1_u (.in(in[95:64]),  .out(so1));
@@ -225,13 +204,11 @@ endmodule
 //---------------------------------------------------------------------------------------
 // Inverse Mix columns size: 4 words
 module inv_mix_columns (
-	in, out
+	input logic [127:0]	in, 
+	output logic [127:0]	out
 );
- 
-input	[127:0]	in;
-output	[127:0]	out;
 
-wire [31:0] so0,so1,so2,so3;
+logic [31:0] so0,so1,so2,so3;
 
 inv_word_mix_columns so0_u (.in(in[127:96]), .out(so0));
 inv_word_mix_columns so1_u (.in(in[95:64]),  .out(so1));

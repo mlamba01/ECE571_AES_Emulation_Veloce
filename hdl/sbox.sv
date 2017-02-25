@@ -13,33 +13,22 @@
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 module sbox(
-	clk,
-	reset,
-	enable,
-	din,
-	ende,
-	en_dout,
-	de_dout);
- 
-input		clk;
-input		reset;
-input		enable;
-input	[7:0]	din;
-input		ende;  //0: encryption;  1: decryption
-output	[7:0]	en_dout;
-output	[7:0]	de_dout;
- 
-wire [7:0] first_matrix_out,first_matrix_in,last_matrix_out_enc,last_matrix_out_dec;
-wire [3:0] p,q,p2,q2,sumpq,sump2q2,inv_sump2q2,p_new,q_new,mulpq,q2B;
-reg [7:0]  first_matrix_out_L;
-reg [3:0]  p_new_L,q_new_L;
- 
+	input logic		clk, reset, enable, ende,	// ende-->   0: encryption;  1: decryption
+	input logic [7:0]	din,
+	output logic [7:0]	en_dout, de_dout
+	);
+
+logic [7:0] first_matrix_out, first_matrix_in, last_matrix_out_enc, last_matrix_out_dec;
+logic [3:0] p, q, p2, q2, sumpq, sump2q2, inv_sump2q2, p_new, q_new, mulpq, q2B;
+logic [7:0]  first_matrix_out_L;
+logic [3:0]  p_new_L, q_new_L;
+
 // GF(256) to GF(16) transformation
 assign first_matrix_in[7:0] = ende ? INV_AFFINE(din[7:0]): din[7:0];
 assign first_matrix_out[7:0] = GF256_TO_GF16(first_matrix_in[7:0]);
  
 // pipeline 1
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
 	if (reset)
 		first_matrix_out_L[7:0] <= 8'b0;
@@ -59,6 +48,7 @@ end
 //  q --> q2*B-/                  x --> q_new 
 //   \___________________________/
 //
+
 assign p[3:0] = first_matrix_out_L[3:0];
 assign q[3:0] = first_matrix_out_L[7:4];
 assign p2[3:0] = SQUARE(p[3:0]);
@@ -81,7 +71,7 @@ assign p_new[3:0] = MUL(sumpq[3:0],inv_sump2q2[3:0]);
 assign q_new[3:0] = MUL(q[3:0],inv_sump2q2[3:0]);
  
 // pipeline 2
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
 	if (reset)
 		{p_new_L[3:0],q_new_L[3:0]} <= 8'b0;
@@ -102,7 +92,7 @@ assign de_dout[7:0] = last_matrix_out_dec[7:0];
 // convert GF(256) to GF(16)
 function [7:0] GF256_TO_GF16;
 input [7:0] data;
-reg a,b,c;
+logic a,b,c;
 begin
 	a = data[1]^data[7];
 	b = data[5]^data[7];
@@ -132,7 +122,7 @@ endfunction
 // inverse
 function [3:0] INVERSE;
 input [3:0] data;
-reg a;
+logic a;
 begin
 	a=data[1]^data[2]^data[3]^(data[1]&data[2]&data[3]);
 	INVERSE[0]=a^data[0]^(data[0]&data[2])^(data[1]&data[2])^(data[0]&data[1]&data[2]);
@@ -147,7 +137,7 @@ endfunction
 // multiply
 function [3:0] MUL;
 input [3:0] d1,d2;
-reg a,b;
+logic a,b;
 begin
 	a=d1[0]^d1[3];
 	b=d1[2]^d1[3];
@@ -162,7 +152,7 @@ endfunction
 // GF16 to GF256 transform
 function [7:0] GF16_TO_GF256;
 input [3:0] p,q;
-reg a,b;
+logic a,b;
 begin
 	a=p[1]^q[3];
 	b=q[0]^q[1];
@@ -197,7 +187,7 @@ endfunction
 // inverse affine transformation
 function [7:0] INV_AFFINE;
 input [7:0] data;
-reg a,b,c,d;
+logic a,b,c,d;
 begin
 	a=data[0]^data[5];
 	b=data[1]^data[4];

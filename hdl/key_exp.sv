@@ -13,58 +13,43 @@
 ////                                                              ////
 //////////////////////////////////////////////////////////////////////
 module key_exp (
-   clk,
-   reset,
-   key_in,
-   key_mode,
-   key_start,
-   wr,
-   wr_addr,
-   wr_data,
-   key_ready
+   input logic		clk, reset, key_start,
+   input logic [255:0]	key_in,
+   input logic [1:0] 	key_mode,
+   output logic 	wr, key_ready,
+   output logic [4:0]	wr_addr,
+   output logic [63:0]	wr_data
 );
  
-input             clk;
-input             reset;
-input   [255:0]   key_in;   // initial key value
-input   [1:0]     key_mode; // 0:128, 1:192, 2:256
-input             key_start;// start key expansion
-output            wr;       // key expansion ram interface
-output  [4:0]     wr_addr;
-output  [63:0]    wr_data;
-output            key_ready;
- 
-reg [31:0]  rcon;
-reg         rcon_is_1b;
-reg [1:0]   state,nstate,pstate;
-reg [3:0]   round;
-reg         sbox_in_valid;
-reg [31:0]  sbox_in;
-reg [4:0]   valid;
-wire        sbox_out_valid;
-wire [31:0] sbox_out;
-wire [31:0] w0_next,w1_next,w2_next,w3_next,w4_next1,w5_next1,w6_next,w7_next;
-wire [31:0] w4_next2,w5_next2;
-reg [31:0]  w0,w1,w2,w3,w4,w5,w6,w7;
-wire        wr1,wr2,wr3,init_wr1,init_wr2,init_wr3,init_wr4;
-reg         wr;
-wire [63:0] wr_data1,wr_data2,wr_data3;
-reg         key_start_L,key_start_L2,key_start_L3;
-reg         wr_256;
-reg [4:0]   wr_addr;
-reg [63:0]  wr_data;
-reg         key_ready;
-wire   [3:0] max_round_p1;
- 
-parameter   IDLE       = 2'b00,
-            START      = 2'b01,
-            GENKEY1    = 2'b10,
-            GENKEY_256 = 2'b11;
- 
+logic [31:0]  rcon;
+logic         rcon_is_1b;
+//logic [1:0]   state,nstate,pstate;
+logic [3:0]   round;
+logic         sbox_in_valid;
+logic [31:0]  sbox_in;
+logic [4:0]   valid;
+logic        sbox_out_valid;
+logic [31:0] sbox_out;
+logic [31:0] w0_next,w1_next,w2_next,w3_next,w4_next1,w5_next1,w6_next,w7_next;
+logic [31:0] w4_next2,w5_next2;
+logic [31:0]  w0,w1,w2,w3,w4,w5,w6,w7;
+logic        wr1,wr2,wr3,init_wr1,init_wr2,init_wr3,init_wr4;
+//logic         wr;
+logic [63:0] wr_data1,wr_data2,wr_data3;
+logic         key_start_L,key_start_L2,key_start_L3;
+logic         wr_256;
+//logic [4:0]   wr_addr;
+//logic [63:0]  wr_data;
+//logic         key_ready;
+logic   [3:0] max_round_p1;
+
+typedef enum logic [1:0] {IDLE, START, GENKEY1, GENKEY_256} states_t;
+states_t state,nstate,pstate;
+
 assign max_round_p1[3:0] = (key_mode == 2'b00) ? 4'd11 : (key_mode == 2'b01 ? 4'd13 : 4'd15);
  
 // rcon generation
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
@@ -76,7 +61,7 @@ begin
       rcon[31:0] <= 32'h01000000;
       rcon_is_1b <= 1'b0;
    end
-   else if (sbox_out_valid && (state[1:0] == GENKEY1))
+   else if (sbox_out_valid && (state == GENKEY1))
    begin
       if (rcon[31])
       begin
@@ -97,73 +82,73 @@ end
 // State machine for Key expansion
 //
 //
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)   
    begin
-      state[1:0]  <= IDLE;
-      pstate[1:0] <= IDLE;
+      state <= IDLE;
+      pstate <= IDLE;
    end
    else
    begin
-      state[1:0]  <= nstate[1:0];
-      pstate[1:0] <= state[1:0];
+      state <= nstate;
+      pstate <= state;
    end
 end
  
-always @ (*)
+always_comb
 begin
-   nstate[1:0] = state[1:0];
-   case (state[1:0])
+   nstate = state;
+   case (state)
       IDLE: 
-         if (key_start) nstate[1:0] = START;
+         if (key_start) nstate = START;
       START:
       begin
-         nstate[1:0] = GENKEY1;
+         nstate = GENKEY1;
       end
       GENKEY1:
       begin
          if (sbox_out_valid)
          begin
             if (key_mode == 2'b00) //128 bit mode 4 x 10 + 4
-               if (round[3:0] == 4'd10)   nstate[1:0] = IDLE;
-               else                       nstate[1:0] = START;
+               if (round[3:0] == 4'd10)   nstate = IDLE;
+               else                       nstate = START;
             else if (key_mode == 2'b01) // 192 bit mode 6 + 6 x 8 = 54 > 52
-               if (round[3:0] == 4'd8) nstate[1:0] = IDLE;
-               else                    nstate[1:0] = START;
+               if (round[3:0] == 4'd8) nstate = IDLE;
+               else                    nstate = START;
             else if (round[3:0] == 4'd7)// 256 bit mode 8 + 8 x 7 = 64 > 60
-               nstate[1:0] = IDLE;
+               nstate = IDLE;
             else
-               nstate[1:0] = GENKEY_256;
+               nstate = GENKEY_256;
          end
       end
       GENKEY_256:
       begin
          if (sbox_out_valid)
-            nstate[1:0] = START;
+            nstate = START;
       end
    endcase
 end
  
 // round counter: 10/12/14
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       round[3:0] <= 1'b0;
-   else if (nstate[1:0] == IDLE)
+   else if (nstate == IDLE)
       round[3:0] <= 4'b0;
-   else if (state[1:0] == START)
+   else if (state == START)
       round[3:0] <= round[3:0] + 1'b1;
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
       sbox_in_valid <= 1'b0;
       sbox_in[31:0] <= 32'b0;
    end
-   else if (state[1:0] == START) // rotword
+   else if (state == START) // rotword
    begin
       sbox_in_valid <= 1'b1;
       if (key_mode == 2'b00) //128
@@ -173,7 +158,7 @@ begin
       else //256
          sbox_in[31:0] <= {w7[23:0],w7[31:24]};
    end
-   else if ((state[1:0] == GENKEY_256) && (pstate[1:0] ==GENKEY1))
+   else if ((state == GENKEY_256) && (pstate == GENKEY1))
    begin
       sbox_in_valid <= 1'b1;
       sbox_in[31:0] <= w3[31:0];
@@ -182,7 +167,7 @@ begin
       sbox_in_valid <= 1'b0;
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       valid[4:0] <= 5'b0;
@@ -211,7 +196,7 @@ assign w5_next2[31:0] = w4_next2[31:0] ^ w5[31:0];
 assign w6_next[31:0]  = w5_next2[31:0] ^ w6[31:0];
 assign w7_next[31:0]  = w6_next[31:0]  ^ w7[31:0];
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
@@ -223,7 +208,7 @@ begin
    end
    else if ((key_mode[1:0] == 2'b10) && sbox_out_valid)
    begin
-      if (state[1:0] == GENKEY1)
+      if (state == GENKEY1)
       begin
          w0[31:0] <= w0_next[31:0];
          w1[31:0] <= w1_next[31:0];
@@ -259,25 +244,25 @@ assign init_wr3 = key_start_L2 && (key_mode[1:0] != 2'b00);
 assign init_wr4 = key_start_L3 && (key_mode[1:0] == 2'b10);
 assign wr1 = valid[2];
 assign wr2 = valid[3];
-assign wr3 = valid[4] && (key_mode[1:0] == 2'b01) && (state[1:0] != IDLE); // remove the last write 
+assign wr3 = valid[4] && (key_mode[1:0] == 2'b01) && (state != IDLE); // remove the last write 
  
 assign wr_data1[63:0] = wr_256 ?{w4[31:0],w5[31:0]} : {w0[31:0],w1[31:0]};
 assign wr_data2[63:0] = wr_256 ?{w6[31:0],w7[31:0]} : {w2[31:0],w3[31:0]};
 assign wr_data3[63:0] = {w4[31:0],w5[31:0]};
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       wr_256 <= 1'b0;
    else if (key_start)
       wr_256 <= 1'b0;
-   else if (sbox_out_valid && (state[1:0] == GENKEY_256))
+   else if (sbox_out_valid && (state == GENKEY_256))
       wr_256 <= 1'b1;
    else if (sbox_out_valid)
       wr_256 <= 1'b0;
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       {key_start_L3,key_start_L2,key_start_L} <= 3'b0;
@@ -285,7 +270,7 @@ begin
       {key_start_L3,key_start_L2,key_start_L} <= {key_start_L2,key_start_L,key_start};
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       wr <= 1'b0;
@@ -293,7 +278,7 @@ begin
       wr <= wr1 || wr2 || wr3 || init_wr1 || init_wr2 || init_wr3 || init_wr4;
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
@@ -318,7 +303,7 @@ begin
    end
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       wr_addr[4:0] <= 5'b0;
@@ -328,7 +313,7 @@ begin
       wr_addr[4:0] <= wr_addr[4:0] + 1'b1;
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       key_ready <= 1'b0;

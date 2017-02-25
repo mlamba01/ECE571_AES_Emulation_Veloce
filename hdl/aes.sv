@@ -20,58 +20,46 @@
 `define XILINX		1 
 
 module aes (
-	clk, reset,
-	i_start, i_enable,
-	i_ende, i_key,
-	i_key_mode, i_data,
-	i_data_valid, o_ready, 
-	o_data, o_data_valid, 
-	o_key_ready
+	input logic		clk, 
+				reset,	
+				i_start, 
+				i_enable,
+				i_ende, 
+				i_data_valid, 	
+	input logic [255:0]	i_key,
+	input logic [1:0]	i_key_mode, 
+	input logic [127:0]	i_data,
+	output logic 		o_ready, 
+				o_data_valid, 
+				o_key_ready,
+	output logic [127:0]	o_data
 );
- 
-//---------------------------------------------------------------------------------------
-// module interfaces 
-input			clk;		// core global clock 
-input			reset;		// core global async reset control 
-input			i_start;	// key expansion start pulse 
-input			i_enable;	// enable encryption / decryption core operation 
-input	[1:0]	i_key_mode; // key length: 0 => 128; 1 => 192; 2 => 256
-input	[255:0]	i_key; 		// if key size is 128/192, upper bits are the inputs 
-input	[127:0]	i_data;		// plain/cipher text data input 
-input			i_data_valid;	// data input valid 
-input			i_ende;		// core mode of operation: 0 => encryption; 1 => decryption
-output			o_ready;	// indicates core is ready for new input data at the next clock cycle 
-output	[127:0]	o_data;		// data output 
-output			o_data_valid;	// data output valid 
-output			o_key_ready;	// key expansion procedure done 
 
-//---------------------------------------------------------------------------------------
 // module registers and signals 
 genvar i;
-wire           final_round;
-reg   [3:0]    max_round;
-wire  [127:0]  en_sb_data,de_sb_data,sr_data,mc_data,imc_data,ark_data;
-reg   [127:0]  sb_data,o_data,i_data_L;
-reg            i_data_valid_L;
-reg            round_valid;
-reg   [2:0]    sb_valid;
-reg            o_data_valid;
-reg   [3:0]    round_cnt,sb_round_cnt1,sb_round_cnt2,sb_round_cnt3;
-wire  [127:0]  round_key;
-wire  [63:0]   rd_data0,rd_data1;
-wire           wr;
-wire  [4:0]    wr_addr;
-wire  [63:0]   wr_data;
-wire  [127:0]  imc_round_key,en_ark_data,de_ark_data,ark_data_final,ark_data_init;
+logic           final_round;
+logic   [3:0]    max_round;
+logic  [127:0]  en_sb_data,de_sb_data,sr_data,mc_data,imc_data,ark_data;
+logic   [127:0]  sb_data, i_data_L;
+logic            i_data_valid_L;
+logic            round_valid;
+logic   [2:0]    sb_valid;
+//logic            o_data_valid;
+logic   [3:0]    round_cnt,sb_round_cnt1,sb_round_cnt2,sb_round_cnt3;
+logic  [127:0]  round_key;
+logic  [63:0]   rd_data0,rd_data1;
+logic           wr;
+logic  [4:0]    wr_addr;
+logic  [63:0]   wr_data;
+logic  [127:0]  imc_round_key,en_ark_data,de_ark_data,ark_data_final,ark_data_init;
 
 //---------------------------------------------------------------------------------------
 // module implementation 
 assign final_round = sb_round_cnt3[3:0] == max_round[3:0];
-//assign o_ready = ~sb_valid[1]; // if ready is asserted, user can input data for the same cycle
 assign o_ready = ~sb_valid[0]; // if ready is asserted, user can input data for the next cycle
- 
+
 // round count is Nr - 1
-always @ (*)
+always_comb
 begin
    case (i_key_mode)
       2'b00: max_round[3:0] = 4'd10;
@@ -79,6 +67,7 @@ begin
       default: max_round[3:0] = 4'd14;
    endcase
 end
+ 
  
 //---------------------------------------------------------------------------------------
 // Sub Bytes
@@ -99,7 +88,7 @@ begin : sbox_block
 end
 endgenerate
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       sb_data[127:0] <= 128'b0;
@@ -107,16 +96,18 @@ begin
       sb_data[127:0] <= i_ende ? de_sb_data[127:0] : en_sb_data[127:0];
 end
  
+ 
 //---------------------------------------------------------------------------------------
 // Shift Rows
 //
 //
-wire [127:0] shrows, ishrows;
+logic [127:0] shrows, ishrows;
 
 shift_rows u_shrows (.si(sb_data[127:0]), .so(shrows));
 inv_shift_rows u_ishrows (.si(sb_data[127:0]), .so(ishrows));
 
 assign sr_data[127:0] = i_ende ? ishrows : shrows;
+ 
  
 //---------------------------------------------------------------------------------------
 // Mix Columns
@@ -124,7 +115,7 @@ assign sr_data[127:0] = i_ende ? ishrows : shrows;
 //
 mix_columns mxc_u (.in(sr_data), .out(mc_data));
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
@@ -137,6 +128,7 @@ begin
       i_data_L[127:0] <=i_data[127:0];
    end
 end
+ 
  
 //---------------------------------------------------------------------------------------
 // Inverse Mix Columns
@@ -157,10 +149,11 @@ assign ark_data[127:0] = i_data_valid_L ? ark_data_init[127:0] :
                            (final_round ? ark_data_final[127:0] : 
                                 (i_ende ? de_ark_data[127:0] : en_ark_data[127:0]));
  
+ 
 //---------------------------------------------------------------------------------------
 // Data outputs after each round
 //
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
       o_data[127:0] <= 128'b0;
@@ -168,11 +161,12 @@ begin
       o_data[127:0] <= ark_data[127:0];
 end
  
+ 
 //---------------------------------------------------------------------------------------
 // in sbox, we have 3 stages (sb_valid),
 // before the end of each round, we have another stage (round_valid)
 //
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
@@ -188,14 +182,14 @@ begin
    end
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)                      round_cnt[3:0] <= 4'd0;
    else if (i_data_valid_L) round_cnt[3:0] <= 4'd1;
    else if (i_enable && sb_valid[2])  round_cnt[3:0] <= sb_round_cnt3[3:0] + 1'b1;
 end
  
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin
    if (reset)
    begin
@@ -211,6 +205,7 @@ begin
    end
 end
  
+ 
 //---------------------------------------------------------------------------------------
 // round key generation: the expansion keys are stored in 4 16*32 rams or 
 // 2 16*64 rams or 1 16*128 rams
@@ -220,9 +215,9 @@ end
 assign round_key[127:0] = {rd_data0[63:0],rd_data1[63:0]};
 
 `ifdef XILINX 
-reg [3:0] rd_addr;
+logic [3:0] rd_addr;
 
-always @ (posedge clk or posedge reset)
+always_ff @ (posedge clk or posedge reset)
 begin 
 	if (reset)
 		rd_addr <= 4'b0;
@@ -264,7 +259,7 @@ xram_16x64 u_ram_1
 	.rd_data(rd_data1[63:0])
 );
 `else 
-wire [3:0] rd_addr;
+logic [3:0] rd_addr;
 
 assign rd_addr[3:0] = i_ende ? (i_data_valid ? max_round[3:0] : (max_round[3:0] - sb_round_cnt2[3:0])) : 
                                (i_data_valid ? 4'b0 : sb_round_cnt2[3:0]);
@@ -290,6 +285,7 @@ ram_16x64 u_ram_1
 	.rd(sb_valid[1] | i_data_valid)
 );
 `endif 
+
 //---------------------------------------------------------------------------------------
 // Key Expansion module
 //
