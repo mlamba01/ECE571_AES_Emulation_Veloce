@@ -41,6 +41,8 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 
 			Key_M.i_start <= 1'b0;
 
+			@posedge(Key_M.clk);
+
 			while (!Key_M.o_key_ready) begin
 				@posedge(Key_M.clk);
 			end
@@ -69,6 +71,8 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 			@posedge(Cipher_M.clk);
 
 			Cipher_M.i_data_valid <= 1'b0;
+
+			@posedge(Cipher_M.clk);
 
 			while (!Cipher_M.o_data_valid) begin
 				@posedge(Cipher_M.clk);
@@ -100,6 +104,8 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 			@posedge(Cipher_M.clk);
 
 			Cipher_M.i_data_valid <= 1'b0;
+
+			@posedge(Cipher_M.clk);
 
 			while (!Cipher_M.o_data_valid) begin
 				@posedge(Cipher_M.clk);
