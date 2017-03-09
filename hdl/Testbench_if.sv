@@ -78,7 +78,7 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 				@posedge(Cipher_M.clk);
 			end
 
-			cipher_out <= Cipher_M.o_data;
+			cipher_out = Cipher_M.o_data;
 
 		end
 
@@ -111,7 +111,7 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 				@posedge(Cipher_M.clk);
 			end
 
-			text_out <= Cipher_M.o_data;
+			text_out = Cipher_M.o_data;
 
 		end
 
