@@ -21,9 +21,7 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 	/************************************************************************/
 	/* Local parameters and variables										*/
 	/************************************************************************/
-
-	state_t		state;
-	state_t		next;
+	
 
 	/************************************************************************/
 	/* Task : CreateKey														*/
