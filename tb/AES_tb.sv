@@ -23,7 +23,7 @@ module AES_tb (
 	Testbench_if.SendRcv	TB_If,
 
 	input	ulogic1		clk,
-	input	ulogic1		resetH
+	output	ulogic1		resetH
 
 	);
 
@@ -44,11 +44,20 @@ module AES_tb (
 	/* initial block : send stimulus to Testbench_if						*/
 	/************************************************************************/
 
+	initial begin
+
+		resetH = 1'b0;
+
 		$timeformat(-9, 0, "ns", 8);
 		fhandle = $fopen("C:/Users/riqbal/Desktop/AES_tb_results.txt");
 
 		// print header at top of read log
 		$fwrite(fhandle,"AES Testbench Results:\n\n");
+
+		repeat (2) @(posedge clk);
+		resetH = 1'b1;
+		repeat (2) @(posedge clk);
+		resetH = 1'b0;
 
 		repeat (4) @(posedge clk);
 
@@ -70,11 +79,15 @@ module AES_tb (
 								"cipher_in = %32x\n", cipher_in,
 								"text_out = %32x\n\n", text_out);
 
+		end
+
 		// wrap up file writing
 		$fwrite(fhandle, "\nEND OF FILE");
 		$fclose(fhandle);
 
 		// simulation over... review results
 		$stop;
+
+	end
 
 endmodule // AES_tb

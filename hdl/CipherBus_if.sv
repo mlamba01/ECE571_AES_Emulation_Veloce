@@ -79,7 +79,7 @@ interface CipherBus_if (
 
 		input	o_ready,
 		input	o_data_valid,
-		input	o_data,
+		input	o_data
 
 		);
 
@@ -99,7 +99,7 @@ interface CipherBus_if (
 
 		output	o_ready,
 		output	o_data_valid,
-		output	o_data,
+		output	o_data
 
 		);
 
