@@ -29,14 +29,26 @@ module top();
 	/* Module instantiations												*/
 	/************************************************************************/
 
-	KeyBus_if		i_KeyBus_if 	(.clk(clk), .resetH(resetH));
-	CipherBus_if	i_CipherBus_if	(.clk(clk), .resetH(resetH));
+	KeyBus_if		i_KeyBus_if 	(.clk		(clk), 
+									.resetH		(resetH));
 
-	Testbench_if	i_Testbench_if 	(.Key_M(i_KeyBus_if.master), 
-									.Cipher_M(i_CipherBus_if.master));
+	CipherBus_if	i_CipherBus_if	(.clk		(clk), 
+									.resetH		(resetH));
 
-	aes				i_aes			(.Key_S(i_KeyBus_if.slave),
-									.Cipher_S(i_CipherBus_if.slave));
+	Testbench_if	i_Testbench_if 	(.Key_M		(i_KeyBus_if.master), 
+									.Cipher_M	(i_CipherBus_if.master));
+
+	aes				i_aes			(.clk		(clk),
+									.reset		(resetH),
+									.Key_S		(i_KeyBus_if.slave),
+									.Cipher_S	(i_CipherBus_if.slave));
+
+
+	AES_tb 			i_AES_tb 		(.clk		(clk), 
+									.resetH		(resetH),
+									.TB_If		(i_Testbench_if.SendRcv));
+
+
 
 	/************************************************************************/
 	/* always block : clk													*/

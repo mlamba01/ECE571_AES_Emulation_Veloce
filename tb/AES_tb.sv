@@ -76,3 +76,5 @@ module AES_tb (
 
 		// simulation over... review results
 		$stop;
+
+endmodule // AES_tb
