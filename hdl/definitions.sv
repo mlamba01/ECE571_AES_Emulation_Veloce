@@ -30,8 +30,8 @@
 		typedef	logic		unsigned	[15:0]	ulogic16;
 		typedef	logic		unsigned	[31:0]	ulogic32;
 		typedef	logic		unsigned	[63:0]	ulogic64;
-		typedef	logic		unsigned	[63:0]	ulogic128;
-		typedef	logic		unsigned	[63:0]	ulogic256;
+		typedef	logic		unsigned	[127:0]	ulogic128;
+		typedef	logic		unsigned	[255:0]	ulogic256;
 
 		// type definitions for unsigned 2-state variables
 		typedef bit			unsigned			uint1;

@@ -59,12 +59,13 @@ module AES_tb (
 		repeat (2) @(posedge clk);
 		resetH = 1'b0;
 
-		repeat (4) @(posedge clk);
+		repeat (16) @(posedge clk);
 
-		for (int i = 0; i < 4; i++) begin
+		for (int i = 0; i < 64; i++) begin
 
 			key_in = {8{$urandom_range(32'hFFFFFFFF, 32'h0)}};
-			text_in = {4{$urandom_range(32'hFFFFFFFF, 32'h0)}};
+			// text_in = {4{$urandom_range(32'hFFFFFFFF, 32'h0)}};
+			text_in = i;
 
 			TB_If.CreateKey(key_in);
 
