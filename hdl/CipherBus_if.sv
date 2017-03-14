@@ -54,10 +54,10 @@ interface CipherBus_if (
 	/* Bus signals															*/
 	/************************************************************************/
 	
-	ulogic1		i_enable;
-	ulogic1		i_ende;
-	ulogic1		i_data_valid;
-	ulogic128	i_data;
+	ulogic1		i_enable		= 1'b0;
+	ulogic1		i_ende			= 1'b0;
+	ulogic1		i_data_valid	= 1'b0;
+	ulogic128	i_data			= 128'd0;
 
 	ulogic1		o_ready;
 	ulogic1		o_data_valid;

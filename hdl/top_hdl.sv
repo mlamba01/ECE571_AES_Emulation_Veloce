@@ -1,4 +1,4 @@
-// Module: top.sv
+// Module: top_hdl.sv
 // Author: Rehan Iqbal
 // Date: March 8, 2017
 // Company: Portland State University
@@ -7,13 +7,13 @@
 // ------------
 //
 // clk - global clock signal
-// reset - active high global async reset
+// resetH - active high global async reset
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "definitions.sv"
 
-module top();
+module top_hdl(); // pragma attribute top_hdl partition_module_xrtl
 
 	timeunit 1ns;
 	timeprecision 100ps;
@@ -43,19 +43,25 @@ module top();
 									.Key_S		(i_KeyBus_if.slave),
 									.Cipher_S	(i_CipherBus_if.slave));
 
-
-	AES_tb 			i_AES_tb 		(.clk		(clk), 
-									.resetH		(resetH),
-									.TB_If		(i_Testbench_if.SendRcv));
-
-
-
 	/************************************************************************/
-	/* always block : clk													*/
+	/* initial block : clk													*/
 	/************************************************************************/
 
-	always begin
-		#0.5 clk <= !clk;
+	// tbx clkgen
+	initial begin
+		clk = 1'b0;
+		forever #0.5 clk = !clk;
+	end
+
+	/************************************************************************/
+	/* initial block : reset												*/
+	/************************************************************************/
+
+	// tbx clkgen
+	initial begin
+		resetH = 1'b0;
+		#2 resetH = 1'b1;
+		#2 resetH = 1'b0;
 	end
 
 endmodule // top

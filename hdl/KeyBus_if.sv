@@ -36,9 +36,9 @@ interface KeyBus_if (
 	/* Bus signals															*/
 	/************************************************************************/
 
-	ulogic1			i_start;
-	ulogic2			i_key_mode;
-	ulogic256		i_key;
+	ulogic1			i_start			= 1'b0;
+	ulogic2			i_key_mode		= 2'd0;
+	ulogic256		i_key			= 256'd0;
 
 	ulogic1			o_key_ready;
 

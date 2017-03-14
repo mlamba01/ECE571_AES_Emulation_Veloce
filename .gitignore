@@ -11,7 +11,7 @@ $ cat .gitignore
 # skip everything in /config
 # handles the formatting of Questa Wave window
 
-/config/*
+#/config/*
 
 # skip all generated outputs & log files
 

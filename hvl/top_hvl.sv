@@ -1,4 +1,4 @@
-// Module: AES_tb.sv
+// Module: top_hvl.sv
 // Author: Rehan Iqbal
 // Date: March 8, 2017
 // Company: Portland State University
@@ -14,31 +14,20 @@
 
 `include "definitions.sv"
 
-module AES_tb (
-
-	/************************************************************************/
-	/* Top-level port declarations											*/
-	/************************************************************************/
-
-	Testbench_if.SendRcv	TB_If,
-
-	input	ulogic1		clk,
-	output	ulogic1		resetH
-
-	);
+module top_hvl;
 
 	/************************************************************************/
 	/* Local parameters and variables										*/
 	/************************************************************************/
 
 	int					fhandle;
-	ulogic256			key_in;
+	ulogic256			key_in			= 256'd0;
 
-	ulogic128			text_in;
-	ulogic128			cipher_out;	
+	ulogic128			text_in			= 128'd0;
+	ulogic128			cipher_out		= 128'd0;	
 
-	ulogic128			cipher_in;
-	ulogic128			text_out;
+	ulogic128			cipher_in		= 128'd0;
+	ulogic128			text_out		= 128'd0;
 
 	/************************************************************************/
 	/* initial block : send stimulus to Testbench_if						*/
@@ -46,20 +35,16 @@ module AES_tb (
 
 	initial begin
 
-		resetH = 1'b0;
-
 		$timeformat(-9, 0, "ns", 8);
-		fhandle = $fopen("C:/Users/riqbal/Desktop/AES_tb_results.txt");
+		fhandle = $fopen("top_hvl_results.txt");
 
 		// print header at top of read log
 		$fwrite(fhandle,"AES Testbench Results:\n\n");
 
-		repeat (2) @(posedge clk);
-		resetH = 1'b1;
-		repeat (2) @(posedge clk);
-		resetH = 1'b0;
+		// wait for resetH to be applied
+		// so that AES-FSM is ready to function
+		top_hdl.i_Testbench_if.WaitForReset();
 
-		repeat (16) @(posedge clk);
 
 		for (int i = 0; i < 64; i++) begin
 
@@ -67,11 +52,14 @@ module AES_tb (
 			// text_in = {4{$urandom_range(32'hFFFFFFFF, 32'h0)}};
 			text_in = i;
 
-			TB_If.CreateKey(key_in);
+			// hierarchical calls to the tasks inside bus-functional model
+			
+			top_hdl.i_Testbench_if.CreateKey(key_in);
+			top_hdl.i_Testbench_if.EncryptData(text_in, cipher_out);
 
-			TB_If.EncryptData(text_in, cipher_out);
 			cipher_in = cipher_out;
-			TB_If.DecryptData(cipher_in, text_out);
+
+			top_hdl.i_Testbench_if.DecryptData(cipher_in, text_out);
 
 			// write results to log file
 			$fwrite(fhandle, 	"key = %64x\n", key_in,
@@ -87,8 +75,8 @@ module AES_tb (
 		$fclose(fhandle);
 
 		// simulation over... review results
-		$stop;
+		$finish;
 
 	end
 
-endmodule // AES_tb
+endmodule

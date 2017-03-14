@@ -14,37 +14,52 @@
 
 `include "definitions.sv"
 
-interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
-
-	modport SendRcv (import CreateKey, import EncryptData, import DecryptData);
+interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);	// pragma attribute Testbench_if partition_interface_xif
 
 	/************************************************************************/
 	/* Local parameters and variables										*/
 	/************************************************************************/
 	
+	/************************************************************************/
+	/* Task : WaitForReset													*/
+	/************************************************************************/
+
+	task WaitForReset(); //pragma tbx xtf
+
+		@(posedge Key_M.clk);
+
+		while(Key_M.resetH == 1'b0) begin
+			@(posedge Key_M.clk);
+		end
+
+		while(Key_M.resetH == 1'b1) begin
+			@(posedge Key_M.clk);
+		end
+
+		@(posedge Key_M.clk);
+
+	endtask : WaitForReset
 
 	/************************************************************************/
 	/* Task : CreateKey														*/
 	/************************************************************************/
 
-	task CreateKey (input ulogic256 key_input);
+	task CreateKey (input ulogic256 key_input); // pragma tbx xtf
 
-		begin
+		@(posedge Key_M.clk);
 
-			Key_M.i_key <= key_input;
-			Key_M.i_key_mode <= 2'b10;
-			Key_M.i_start <= 1'b1;
+		Key_M.i_key <= key_input;
+		Key_M.i_key_mode <= 2'b10;
+		Key_M.i_start <= 1'b1;
 
+		@(posedge Key_M.clk);
+
+		Key_M.i_start <= 1'b0;
+
+		@(posedge Key_M.clk);
+
+		while (!Key_M.o_key_ready) begin
 			@(posedge Key_M.clk);
-
-			Key_M.i_start <= 1'b0;
-
-			@(posedge Key_M.clk);
-
-			while (!Key_M.o_key_ready) begin
-				@(posedge Key_M.clk);
-			end
-
 		end
 
 	endtask : CreateKey
@@ -53,32 +68,31 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 	/* Task : EncryptData													*/
 	/************************************************************************/
 
-	task EncryptData (input	ulogic128 text_in, output ulogic128 cipher_out);
+	task EncryptData (input	ulogic128 text_in, output ulogic128 cipher_out); // pragma tbx xtf
 		
-		begin
+		@(posedge Cipher_M.clk);
 
-			while (!Cipher_M.o_ready) begin
-				@(posedge Cipher_M.clk);
-			end
-
-			Cipher_M.i_data <= text_in;
-			Cipher_M.i_data_valid <= 1'b1;
-			Cipher_M.i_ende <= 1'b0;
-			Cipher_M.i_enable <= 1'b1;
-
+		while (!Cipher_M.o_ready) begin
 			@(posedge Cipher_M.clk);
-
-			Cipher_M.i_data_valid <= 1'b0;
-
-			@(posedge Cipher_M.clk);
-
-			while (!Cipher_M.o_data_valid) begin
-				@(posedge Cipher_M.clk);
-			end
-
-			cipher_out = Cipher_M.o_data;
-
 		end
+
+		Cipher_M.i_data <= text_in;
+		Cipher_M.i_data_valid <= 1'b1;
+		Cipher_M.i_ende <= 1'b0;
+		Cipher_M.i_enable <= 1'b1;
+
+		@(posedge Cipher_M.clk);
+
+		Cipher_M.i_data_valid <= 1'b0;
+
+		@(posedge Cipher_M.clk);
+
+		while (!Cipher_M.o_data_valid) begin
+			@(posedge Cipher_M.clk);
+		end
+
+		cipher_out = Cipher_M.o_data;
+
 
 	endtask : EncryptData
 
@@ -86,32 +100,32 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);
 	/* Task : DecryptData													*/
 	/************************************************************************/
 
-	task DecryptData (input ulogic128 cipher_in, output ulogic128 text_out);
+	task DecryptData (input ulogic128 cipher_in, output ulogic128 text_out); // pragma tbx xtf
 
-		begin
+		@(posedge Cipher_M.clk);
 
-			while (!Cipher_M.o_ready) begin
-				@(posedge Cipher_M.clk);
-			end
-
-			Cipher_M.i_data <= cipher_in;
-			Cipher_M.i_data_valid <= 1'b1;
-			Cipher_M.i_ende <= 1'b1;
-			Cipher_M.i_enable <= 1'b1;
-
+		while (!Cipher_M.o_ready) begin
 			@(posedge Cipher_M.clk);
-
-			Cipher_M.i_data_valid <= 1'b0;
-
-			@(posedge Cipher_M.clk);
-
-			while (!Cipher_M.o_data_valid) begin
-				@(posedge Cipher_M.clk);
-			end
-
-			text_out = Cipher_M.o_data;
-
 		end
+
+		Cipher_M.i_data <= cipher_in;
+		Cipher_M.i_data_valid <= 1'b1;
+		Cipher_M.i_ende <= 1'b1;
+		Cipher_M.i_enable <= 1'b1;
+
+		@(posedge Cipher_M.clk);
+
+		Cipher_M.i_data_valid <= 1'b0;
+
+		@(posedge Cipher_M.clk);
+
+		while (!Cipher_M.o_data_valid) begin
+			@(posedge Cipher_M.clk);
+		end
+
+		text_out <= Cipher_M.o_data;
+
+		@(posedge Cipher_M.clk);
 
 	endtask : DecryptData
 
