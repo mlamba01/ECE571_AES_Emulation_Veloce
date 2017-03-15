@@ -106,7 +106,7 @@ run:
 	# -c flag sets command-line mode
 	# -do flag executes the command "run -all" on startup (could also specify file)
 
-	vsim -c -do "run -all" top_hvl top_hdl		# Run for the entire simulation 
+	vsim -c -do vsim.do top_hvl top_hdl			# Run for the entire simulation 
 	cp transcript transcript.$(MODE)			# Record transcript
 
 norun:	# No run lets you control stepping etc. 

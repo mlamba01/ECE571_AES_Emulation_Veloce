@@ -91,8 +91,9 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);	/
 			@(posedge Cipher_M.clk);
 		end
 
-		cipher_out = Cipher_M.o_data;
+		cipher_out <= Cipher_M.o_data;
 
+		@(posedge Cipher_M.clk);
 
 	endtask : EncryptData
 
@@ -128,5 +129,45 @@ interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);	/
 		@(posedge Cipher_M.clk);
 
 	endtask : DecryptData
+
+	/************************************************************************/
+	/* Protocol Assertions													*/
+	/************************************************************************/
+
+	// make sure Key_M.i_start applies for exactly one cycle
+	// then stays low for the rest of transaction, until output key is ready
+
+	property Key_M_i_start_one_cycle;
+		@(posedge Key_M.clk) Key_M.i_start |=> !Key_M.i_start throughout ##[1:$] (Key_M.o_key_ready & !Key_M.i_start);
+	endproperty
+
+	assert property (Key_M_i_start_one_cycle) else $error("Start flag 'i_start' on bus 'Key_M' went high at time %t!", $time);
+
+	// make sure Key_M.i_key values are not 'x' or 'z' logic values
+	// at the time when AES core is sampling inputs
+
+	property Key_M_i_key_known_logic;
+		@(posedge Key_M.clk) Key_M.i_start |-> !$isunknown(Key_M.i_key);
+	endproperty
+
+	assert property (Key_M_i_key_known_logic) else $error("Input data 'i_key' on bus 'Key_M' is unknown at time %t!", $time);
+
+	// make sure Cipher_M.i_data_valid applies for exactly one cycle
+	// then stays low for the rest of transaction, until output data is ready
+
+	property Cipher_M_i_data_valid_one_cycle;
+		@(posedge Cipher_M.clk) Cipher_M.i_data_valid |=> !Cipher_M.i_data_valid throughout ##[1:$] (Cipher_M.o_data_valid & !Cipher_M.i_data_valid);
+	endproperty
+
+	assert property (Cipher_M_i_data_valid_one_cycle) else $error("Start flag 'i_data_valid' on bus 'Cipher_M' went high at time %t!", $time);
+
+	//  make sure Cipher_M.i_data values are not 'x' or 'z' logic values
+	// at the time when AES core is sampling inputs
+
+	property Cipher_M_i_data_known_logic;
+		@(posedge Cipher_M.clk) Cipher_M.i_data_valid |-> !$isunknown(Cipher_M.i_data);
+	endproperty
+
+	assert property (Cipher_M_i_data_known_logic) else $error("Input data 'i_data' on bus 'Cipher_M' is unknown at time %t!", $time);
 
 endinterface : Testbench_if

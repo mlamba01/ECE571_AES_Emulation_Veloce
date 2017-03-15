@@ -14,7 +14,7 @@
 
 `include "definitions.sv"
 
-module top_hvl;
+program top_hvl;
 
 	/************************************************************************/
 	/* Local parameters and variables										*/
@@ -24,9 +24,7 @@ module top_hvl;
 	ulogic256			key_in			= 256'd0;
 
 	ulogic128			text_in			= 128'd0;
-	ulogic128			cipher_out		= 128'd0;	
-
-	ulogic128			cipher_in		= 128'd0;
+	ulogic128			cipher_text		= 128'd0;
 	ulogic128			text_out		= 128'd0;
 
 	/************************************************************************/
@@ -36,7 +34,8 @@ module top_hvl;
 	initial begin
 
 		$timeformat(-9, 0, "ns", 8);
-		fhandle = $fopen("top_hvl_results.txt");
+
+		assert ((fhandle = $fopen("top_hvl_results.txt")) != 0) else $error("%m can't open file top_hvl_results.txt!");
 
 		// print header at top of read log
 		$fwrite(fhandle,"AES Testbench Results:\n\n");
@@ -49,23 +48,18 @@ module top_hvl;
 		for (int i = 0; i < 64; i++) begin
 
 			key_in = {8{$urandom_range(32'hFFFFFFFF, 32'h0)}};
-			// text_in = {4{$urandom_range(32'hFFFFFFFF, 32'h0)}};
-			text_in = i;
+			text_in = {4{$urandom_range(32'hFFFFFFFF, 32'h0)}};
 
 			// hierarchical calls to the tasks inside bus-functional model
 			
 			top_hdl.i_Testbench_if.CreateKey(key_in);
-			top_hdl.i_Testbench_if.EncryptData(text_in, cipher_out);
-
-			cipher_in = cipher_out;
-
-			top_hdl.i_Testbench_if.DecryptData(cipher_in, text_out);
+			top_hdl.i_Testbench_if.EncryptData(text_in, cipher_text);
+			top_hdl.i_Testbench_if.DecryptData(cipher_text, text_out);
 
 			// write results to log file
 			$fwrite(fhandle, 	"key = %64x\n", key_in,
 								"text_in = %32x\n", text_in,
-								"cipher_out = %32x\n", cipher_out,
-								"cipher_in = %32x\n", cipher_in,
+								"cipher_text = %32x\n", cipher_text,
 								"text_out = %32x\n\n", text_out);
 
 		end
@@ -74,9 +68,9 @@ module top_hvl;
 		$fwrite(fhandle, "\nEND OF FILE");
 		$fclose(fhandle);
 
-		// simulation over... review results
-		$finish;
+		// end simulation
+		$stop;
 
 	end
 
-endmodule
+endprogram
