@@ -21,6 +21,7 @@ program top_hvl;
 	/************************************************************************/
 
 	int					fhandle;
+	int					errors			= 0;
 	ulogic256			key_in			= 256'd0;
 
 	ulogic128			text_in			= 128'd0;
@@ -45,13 +46,23 @@ program top_hvl;
 		top_hdl.i_Testbench_if.WaitForReset();
 
 
-		for (int i = 0; i < 64; i++) begin
+		for (int i = 0; i < 4; i++) begin
 
-			key_in = {8{$urandom_range(32'hFFFFFFFF, 32'h0)}};
-			text_in = {4{$urandom_range(32'hFFFFFFFF, 32'h0)}};
+			key_in[255:224] 	=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[223:192] 	=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[191:160] 	=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[159:128] 	=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[127:96] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[95:64] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[63:32] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			key_in[31:0] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
+
+			text_in[127:96] 	=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			text_in[95:64] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			text_in[63:32] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
+			text_in[31:0] 		=  $urandom_range(32'hFFFFFFFF, 32'h0);
 
 			// hierarchical calls to the tasks inside bus-functional model
-			
 			top_hdl.i_Testbench_if.CreateKey(key_in);
 			top_hdl.i_Testbench_if.EncryptData(text_in, cipher_text);
 			top_hdl.i_Testbench_if.DecryptData(cipher_text, text_out);
@@ -62,14 +73,19 @@ program top_hvl;
 								"cipher_text = %32x\n", cipher_text,
 								"text_out = %32x\n\n", text_out);
 
+			if (text_out != text_in) begin
+				$fwrite(fhandle, "Error: output text does not match input text!\n\n");
+				errors += 1;
+			end
 		end
 
 		// wrap up file writing
-		$fwrite(fhandle, "\nEND OF FILE");
+		$fwrite(fhandle, "There were %4d errors found between input & output text.\n\n", errors);
+		$fwrite(fhandle, "END OF FILE");
 		$fclose(fhandle);
 
 		// end simulation
-		$stop;
+		$finish;
 
 	end
 
