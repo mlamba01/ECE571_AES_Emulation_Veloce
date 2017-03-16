@@ -11,10 +11,10 @@
 all: clean build run
 
 clean:
-	rm -rf demo
+	rm -rf demo output.txt
 
 build: 
 	gcc -Wall -std=c99 demo.c aes256.c -o demo
 
 run: 
-	./demo "test.txt"
+	./demo "trace.txt"

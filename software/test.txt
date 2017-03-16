@@ -1,3 +1,0 @@
-k 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
-d aaaabbbbccccddddeeeeffffaaaabbbb
-r

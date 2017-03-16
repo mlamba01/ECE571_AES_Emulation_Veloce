@@ -20,7 +20,9 @@ program top_hvl;
 	/* Local parameters and variables										*/
 	/************************************************************************/
 
-	int					fhandle;
+	int					fhandle1		= 1;
+	int					fhandle2		= 2;
+
 	int					errors			= 0;
 	ulogic256			key_in			= 256'd0;
 
@@ -36,10 +38,11 @@ program top_hvl;
 
 		$timeformat(-9, 0, "ns", 8);
 
-		assert ((fhandle = $fopen("top_hvl_results.txt")) != 0) else $error("%m can't open file top_hvl_results.txt!");
+		assert ((fhandle1 = $fopen("top_hvl_results.txt")) != 0) else $error("%m can't open file top_hvl_results.txt!");
+		assert ((fhandle2 = $fopen("trace.txt")) != 0) else $error("%m can't open file trace.txt!");
 
 		// print header at top of read log
-		$fwrite(fhandle,"AES Testbench Results:\n\n");
+		$fwrite(fhandle1,"AES Testbench Results:\n\n");
 
 		// wait for resetH to be applied
 		// so that AES-FSM is ready to function
@@ -68,21 +71,28 @@ program top_hvl;
 			top_hdl.i_Testbench_if.DecryptData(cipher_text, text_out);
 
 			// write results to log file
-			$fwrite(fhandle, 	"key = %64x\n", key_in,
+			$fwrite(fhandle1, 	"key = %64x\n", key_in,
 								"text_in = %32x\n", text_in,
 								"cipher_text = %32x\n", cipher_text,
 								"text_out = %32x\n\n", text_out);
 
 			if (text_out != text_in) begin
-				$fwrite(fhandle, "Error: output text does not match input text!\n\n");
+				$fwrite(fhandle1, "Error: output text does not match input text!\n\n");
 				errors += 1;
 			end
+			
+			$fwrite(fhandle2,	"k %64x\n", key_in,
+								"t %32x\n", text_in,
+								"e %32x\n", cipher_text,
+								"r\n\n");
 		end
 
 		// wrap up file writing
-		$fwrite(fhandle, "There were %4d errors found between input & output text.\n\n", errors);
-		$fwrite(fhandle, "END OF FILE");
-		$fclose(fhandle);
+		$fwrite(fhandle1, "There were %4d errors found between input & output text.\n\n", errors);
+		$fwrite(fhandle1, "END OF FILE");
+		$fclose(fhandle1);
+
+		$fclose(fhandle2);
 
 		// end simulation
 		$finish;
