@@ -8,13 +8,13 @@
 ##
 ################################################################################
 
-all: clean compile run
+all: clean build run
 
 clean:
 	rm -rf demo
 
-compile: 
-	gcc -Wall demo.c aes256.c -o demo
+build: 
+	gcc -Wall -std=c99 demo.c aes256.c -o demo
 
 run: 
-	./demo
+	./demo "test.txt"
