@@ -1,13 +1,15 @@
 // Module: CipherBus_if.sv
 // Author: Rehan Iqbal
-// Date: March 8, 2017
+// Date: March 18, 2017
 // Company: Portland State University
 //
 // Description:
-// ------------
 //
-// clk - global clock signal
-// reset - active high global async reset
+// This modules represents the bus containing signals for plaintext/ciphertext
+// going into & out of the AES core. Used to simplify connections in "top_hdl.sv"
+// module. It contains two ports - master (top_hdl) & slave (AES).
+//
+// The signals are defined as:
 // 
 // i_data[128] - plain or cipher text data input to the core. 
 // Bus holds the value of data for the encryption/decryption operation. 

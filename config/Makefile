@@ -1,18 +1,20 @@
 ## File: Makefile
 ## Author: Rehan Iqbal
-## Date: March 13, 2017
+## Date: March 18, 2017
 ## Company: Portland State University
 ##
 ## Description:
-## ------------
+##
+## Use this to compile & run the HDL & HVL on Veloce / Co-Model Server.
+## Once design is working, can simply use 'make all' command.
 ##
 ################################################################################
 
-# Specify the mode - could be either Puresim or Veloce
-# Make sure design works in Puresim before changing to Veloce
+# Specify the mode - could be either Puresim or Veloce (default)
+# Make sure design works in Puresim before changing to Veloce!
 
 # e.g.	make work MODE="puresim"
-#		make work MODE="veloce"
+#		make build MODE="puresim"
 
 MODE ?= veloce
 
@@ -112,6 +114,9 @@ run:
 norun:	# No run lets you control stepping etc. 
 	vsim -c +tbxrun+norun top_hvl top_hdl -cpppath $(CPP_PATH)
 	cp transcript transcript.$(MODE)
+
+# remove results of the last simulation from folder
+# including compilation files, logs, etc.
 
 clean:
 	rm -rf tbxbindings.h modelsim.ini transcript.veloce transcript.puresim work work.puresim work.veloce transcript *~ vsim.wlf *.log dgs.dbg dmslogdir veloce.med veloce.wave veloce.map velrunopts.ini edsenv top_hvl_results.txt vish_stacktrace.vstf

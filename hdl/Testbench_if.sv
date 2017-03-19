@@ -1,24 +1,44 @@
 // Module: Testbench_if.sv
 // Author: Rehan Iqbal
-// Date: March 8, 2017
+// Date: March 18, 2017
 // Company: Portland State University
 //
 // Description:
 // ------------
 //
-// clk - global clock signal
-// reset - active high global async reset
+// This module is used to communicate between "top_hvl" and "top_hdl" through
+// a series of tasks. Again, the project is running in TBX mode with
+// top_hvl on the Co-Model server and top_hdl on Veloce.
+//
+// The tasks are accessed using BFM mode, with a simple hierarchical call
+// in top_hvl. They are made synthesizable for Veloce through several pragmas.
+// All are done using implicit FSM's.
+//
+// WaitForReset - makes HVL wait for resetH signal to go high, then to go low
+// again before continuing with simulation. Necessary to make sure AES core
+// is in a good state. Otherwise, you will receive many 'x unknown logic values.
+//
+// CreateKey - the HVL provides some random 256-bit key input, which
+// the task puts on the KeyBus interface and sets the appropriate signals
+// to drive the aes.sv core.
 // 
+// EncryptData - the HVL provides some random 128-bit plaintext input, which
+// the task puts on the CipherBus interface and sets the appropriate signals
+// to drive the aes.sv core.
+//
+// DecryptData - the HVL provides some generated 128-bit ciphertext, which
+// the tasks puts on the CipherBus interface and sets the appropriate signals
+// to drive the aes.sv core.
+//
+// Assertions at the bottom are used to enforce bus protocol (i.e. make sure
+// start signals are high for exactly 1 cycle, no unknown logic values).
+// Could not get a timeout assertion for output data to work...
 //
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "definitions.sv"
 
 interface Testbench_if (KeyBus_if.master Key_M, CipherBus_if.master Cipher_M);	// pragma attribute Testbench_if partition_interface_xif
-
-	/************************************************************************/
-	/* Local parameters and variables										*/
-	/************************************************************************/
 	
 	/************************************************************************/
 	/* Task : WaitForReset													*/

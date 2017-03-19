@@ -1,12 +1,12 @@
 // Module: definitions.pkg
 // Author: Rehan Iqbal
-// Date: March 9th, 2017
+// Date: March 18th, 2017
 // Company: Portland State University
 //
 // Description:
 // ------------
-// Package definitions file for the memController module & testbench. Contains
-// type definitions for unsigned vars and parameters for FSM states.
+// Package definitions file for the AES project. Contains
+// type definitions for unsigned vars... no FSM states or structs/unions
 //
 // Include in target modules through syntax: `include "definitions.pkg"
 // Make sure library paths include this file!

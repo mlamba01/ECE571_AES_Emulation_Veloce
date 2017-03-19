@@ -1,14 +1,25 @@
 // Module: top_hdl.sv
 // Author: Rehan Iqbal
-// Date: March 8, 2017
+// Date: March 18, 2017
 // Company: Portland State University
 //
 // Description:
-// ------------
 //
 // clk - global clock signal
 // resetH - active high global async reset
+// 
+// This module provides the top-level HDL code to run on the Veloce Solo,
+// while the HVL (top_hvl.sv) runs on the Co-Model Server. Given that it runs on
+// the emulator, it can only contain sythesizable constructs.
+// 
+// The module works through Testbench Xpress (TBX) connection to Co-Model Server.
+// The Bus Functional Model (BFM) method is used so that the "top_hvl.sv"
+// program can call tasks in this "top_hdl.sv" module.
 //
+// The module generates a global clock & reset signal (with pragmas for Veloce)
+// and asserts the rest for 2 clock cycles. It also instantiates all the child
+// modules (KeyBus_if, CipherBus_if, Testbench_if, and aes).
+// 
 ////////////////////////////////////////////////////////////////////////////////
 
 `include "definitions.sv"
